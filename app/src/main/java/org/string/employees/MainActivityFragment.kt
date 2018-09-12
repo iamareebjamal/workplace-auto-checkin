@@ -1,5 +1,6 @@
 package org.string.employees
 
+import android.annotation.SuppressLint
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
 import android.support.v4.app.Fragment
@@ -11,6 +12,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import com.gun0912.tedpermission.PermissionListener
 import com.gun0912.tedpermission.TedPermission
+import kotlinx.android.synthetic.main.fragment_main.*
 import org.string.employees.geofence.Error
 import org.string.employees.geofence.Success
 
@@ -21,8 +23,10 @@ class MainActivityFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
-        val view = inflater.inflate(R.layout.fragment_main, container, false)
+        return inflater.inflate(R.layout.fragment_main, container, false)
+    }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         viewModel = ViewModelProviders.of(this).get(MainViewModel::class.java)
 
         viewModel.getAskPermission().observe(this, Observer {
@@ -33,7 +37,7 @@ class MainActivityFragment : Fragment() {
             it?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
         })
 
-        viewModel.addGeofence()?.observe(this, Observer {
+        viewModel.getGeofence().observe(this, Observer {
             it?.let {
                 when (it) {
                     is Success -> Toast.makeText(context, "Geofence added", Toast.LENGTH_SHORT).show()
@@ -45,7 +49,20 @@ class MainActivityFragment : Fragment() {
             }
         })
 
-        return view
+        viewModel.getLocation().observe(this, Observer {
+            Log.d("LOCATION", it.toString())
+        })
+
+        viewModel.fetchLocation()
+
+        enableGeofencing.setOnClickListener {
+            viewModel.addGeofence()
+        }
+
+        enableGeofencing.setOnLongClickListener {
+            Toast.makeText(context, "Enable Geofencing", Toast.LENGTH_LONG).show()
+            true
+        }
     }
 
     private fun askPermission(permission: String?) {
@@ -53,6 +70,7 @@ class MainActivityFragment : Fragment() {
             tedPermission = TedPermission.with(context)
                     .setPermissions(permission)
                     .setPermissionListener(object: PermissionListener {
+                        @SuppressLint("MissingPermission")
                         override fun onPermissionGranted() {
                             viewModel.handlePermissionGranted(true)
                         }

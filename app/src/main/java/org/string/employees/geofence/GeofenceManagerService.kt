@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
 import android.content.Intent
+import android.location.Location
 import android.util.Log
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingRequest
@@ -15,6 +16,10 @@ class GeofenceManagerService(private val application: Application) {
 
     private val geofencingClient by lazy {
         LocationServices.getGeofencingClient(application)
+    }
+
+    private val locationService by lazy {
+        LocationServices.getFusedLocationProviderClient(application)
     }
 
     private val workGeofence by lazy {
@@ -38,9 +43,25 @@ class GeofenceManagerService(private val application: Application) {
     }
 
     private val addGeofenceLiveData = MutableLiveData<Result>()
+    private val locationLiveData = MutableLiveData<Location>()
+
+    fun getWorkGeofence(): LiveData<Result> {
+        return addGeofenceLiveData
+    }
+
+    fun getLocation(): LiveData<Location> {
+        return locationLiveData
+    }
 
     @SuppressLint("MissingPermission")
-    fun addWorkGeofence(): LiveData<Result> {
+    fun fetchLocation() {
+        locationService.lastLocation.addOnSuccessListener {
+            locationLiveData.postValue(it)
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    fun addWorkGeofence() {
         geofencingClient.removeGeofences(listOf(GeoConstants.WORK_GEOFENCE_ID))?.run {
             addOnSuccessListener {
                 Log.d("GEOFENCE", "Removed Geofence")
@@ -61,7 +82,6 @@ class GeofenceManagerService(private val application: Application) {
             }
         }
 
-        return addGeofenceLiveData
     }
 
     private fun getGeofencingRequest(): GeofencingRequest {

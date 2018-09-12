@@ -8,7 +8,9 @@ import android.arch.lifecycle.MutableLiveData
 import android.content.pm.PackageManager
 import android.support.v4.content.ContextCompat
 import org.string.employees.geofence.GeofenceManagerService
-import org.string.employees.geofence.Result
+
+private const val TASK_ADD_GEOFENCE = 1
+private const val TASK_FETCH_LOCATION = 2
 
 class MainViewModel(application: Application): AndroidViewModel(application) {
 
@@ -18,6 +20,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     private val askPermissionLiveData = MutableLiveData<String>()
     private val toastLiveData = MutableLiveData<String>()
+
+    private var pendingTasks = mutableListOf<Int>()
 
     fun getAskPermission(): LiveData<String> = askPermissionLiveData
     fun getToast(): LiveData<String> = toastLiveData
@@ -34,17 +38,38 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun handlePermissionGranted(granted: Boolean) {
         if (granted) {
             toastLiveData.postValue("Permission Granted")
-            addGeofence()
+            handlePendingTask()
         } else {
             toastLiveData.postValue("Permission Denied")
         }
     }
 
-    fun addGeofence(): LiveData<Result>? {
-        return if (checkAndRequestPermission()) {
+    fun getLocation() = geofencingManagerService.getLocation()
+
+    fun getGeofence() = geofencingManagerService.getWorkGeofence()
+
+    fun fetchLocation() {
+        if (checkAndRequestPermission()) {
+            geofencingManagerService.fetchLocation()
+        } else {
+            pendingTasks.add(TASK_FETCH_LOCATION)
+        }
+    }
+
+    fun addGeofence() {
+        if (checkAndRequestPermission()) {
             geofencingManagerService.addWorkGeofence()
         } else {
-            null
+            pendingTasks.add(TASK_ADD_GEOFENCE)
+        }
+    }
+
+    private fun handlePendingTask() {
+        for (pendingTask in pendingTasks) {
+            when (pendingTask) {
+                TASK_ADD_GEOFENCE -> addGeofence()
+                TASK_FETCH_LOCATION -> fetchLocation()
+            }
         }
     }
 
