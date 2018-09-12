@@ -1,17 +1,17 @@
 package org.string.employees
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.app.PendingIntent
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
 import android.content.Intent
+import android.support.annotation.RequiresPermission
 import android.support.v4.content.ContextCompat
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
 import java.util.jar.Manifest
-
-const val FINE_LOCATION_PERMISSION = "android.permission.ACCESS_FINE_LOCATION"
 
 class GeofenceManagerService(private val application: Application) {
 
@@ -22,6 +22,7 @@ class GeofenceManagerService(private val application: Application) {
     private val workGeofence by lazy {
         Geofence.Builder()
                 .setRequestId(GeoConstants.WORK_GEOFENCE_ID)
+                .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .setCircularRegion(
                         GeoConstants.LATITUDE,
                         GeoConstants.LONGITUDE,
@@ -38,9 +39,20 @@ class GeofenceManagerService(private val application: Application) {
         PendingIntent.getService(application, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
-    private val addGeofenceLiveData = MutableLiveData<String>()
+    private val addGeofenceLiveData = MutableLiveData<Result>()
 
-    fun addWorkGeofence(): LiveData<String> {
+    @SuppressLint("MissingPermission")
+    fun addWorkGeofence(): LiveData<Result> {
+        geofencingClient.removeGeofences(GeoConstants.WORK_GEOFENCE_ID)
+        geofencingClient?.addGeofences(getGeofencingRequest(), geofencePendingIntent)?.run {
+            addOnSuccessListener {
+                addGeofenceLiveData.postValue(Success())
+            }
+            addOnFailureListener {
+                addGeofenceLiveData.postValue(Error(it))
+            }
+        }
+
         return addGeofenceLiveData
     }
 
