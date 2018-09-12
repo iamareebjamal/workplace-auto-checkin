@@ -1,4 +1,4 @@
-package org.string.employees
+package org.string.employees.geofence
 
 object GeoConstants {
     const val WORK_GEOFENCE_ID = "string-office-geofence"

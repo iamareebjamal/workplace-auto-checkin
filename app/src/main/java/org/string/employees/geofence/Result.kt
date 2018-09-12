@@ -1,4 +1,4 @@
-package org.string.employees
+package org.string.employees.geofence
 
 sealed class Result
 data class Success(val success: Boolean = true): Result()

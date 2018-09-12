@@ -11,6 +11,8 @@ import android.view.ViewGroup
 import android.widget.Toast
 import com.gun0912.tedpermission.PermissionListener
 import com.gun0912.tedpermission.TedPermission
+import org.string.employees.geofence.Error
+import org.string.employees.geofence.Success
 
 class MainActivityFragment : Fragment() {
 

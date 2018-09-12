@@ -5,11 +5,10 @@ import android.app.Application
 import android.arch.lifecycle.AndroidViewModel
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
-import android.arch.lifecycle.ViewModel
 import android.content.pm.PackageManager
 import android.support.v4.content.ContextCompat
-import com.google.android.gms.location.GeofencingClient
-import com.google.android.gms.location.LocationServices
+import org.string.employees.geofence.GeofenceManagerService
+import org.string.employees.geofence.Result
 
 class MainViewModel(application: Application): AndroidViewModel(application) {
 

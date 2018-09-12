@@ -1,4 +1,4 @@
-package org.string.employees
+package org.string.employees.geofence
 
 import android.annotation.SuppressLint
 import android.app.Application
@@ -6,12 +6,10 @@ import android.app.PendingIntent
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
 import android.content.Intent
-import android.support.annotation.RequiresPermission
-import android.support.v4.content.ContextCompat
+import android.util.Log
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
-import java.util.jar.Manifest
 
 class GeofenceManagerService(private val application: Application) {
 
@@ -35,7 +33,7 @@ class GeofenceManagerService(private val application: Application) {
     }
 
     private val geofencePendingIntent: PendingIntent by lazy {
-        val intent = Intent(application, GeofenceTransitionsIntentService::class.java)
+        val intent = Intent(application, GeofenceBroadcastReceiver::class.java)
         PendingIntent.getService(application, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
@@ -43,12 +41,22 @@ class GeofenceManagerService(private val application: Application) {
 
     @SuppressLint("MissingPermission")
     fun addWorkGeofence(): LiveData<Result> {
-        geofencingClient.removeGeofences(GeoConstants.WORK_GEOFENCE_ID)
+        geofencingClient.removeGeofences(listOf(GeoConstants.WORK_GEOFENCE_ID))?.run {
+            addOnSuccessListener {
+                Log.d("GEOFENCE", "Removed Geofence")
+            }
+
+            addOnFailureListener {
+                Log.e("GEOFENCE", "Error removing geofence", it)
+            }
+        }
         geofencingClient?.addGeofences(getGeofencingRequest(), geofencePendingIntent)?.run {
             addOnSuccessListener {
+                Log.d("GEOFENCE", "Added Geofence")
                 addGeofenceLiveData.postValue(Success())
             }
             addOnFailureListener {
+                Log.e("GEOFENCE", "Error adding geofence", it)
                 addGeofenceLiveData.postValue(Error(it))
             }
         }
